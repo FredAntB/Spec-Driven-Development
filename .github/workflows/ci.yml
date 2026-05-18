@@ -1,0 +1,168 @@
+name: SDD Skill Test Suite
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Manual run reason"
+        required: false
+        default: "Manual trigger"
+
+# Cancel in-flight runs on the same branch when a new push arrives
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 1 — Phase 2A: Static assertions (64 checks)
+  # Runs on every push and PR. Required to pass before merging.
+  # ─────────────────────────────────────────────────────────────────
+  phase2a:
+    name: "Phase 2A — Static assertions"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run static assertions
+        run: PYTHONUTF8=1 python phase2a/run_assertions.py
+
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 2 — Phase 2C: Generation quality (53 checks)
+  # Runs only when fixture files are committed to the repo.
+  # Fixtures are generated manually in Claude Code (phase2c/KICKOFF.md)
+  # and committed after each significant skill change.
+  # ─────────────────────────────────────────────────────────────────
+  phase2c:
+    name: "Phase 2C — Generation quality"
+    runs-on: ubuntu-latest
+    # Always run this job — the Python script handles the missing-fixtures
+    # case gracefully and we surface it as a clear annotation, not a
+    # silent skip.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check fixture availability
+        id: fixtures
+        run: |
+          FLOW_A="phase2c/flow_a/requirements.md"
+          FLOW_B="phase2c/flow_b/requirements.md"
+          FLOW_C="phase2c/flow_c/CLAUDE.md"
+
+          ALL_PRESENT=true
+          for f in "$FLOW_A" "$FLOW_B" "$FLOW_C"; do
+            if [ ! -f "$f" ]; then
+              echo "::warning file=$f::Phase 2C fixture missing: $f"
+              echo "::warning::Run phase2c/KICKOFF.md in Claude Code, then commit the generated files to enable this check."
+              ALL_PRESENT=false
+            fi
+          done
+
+          if [ "$ALL_PRESENT" = "true" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run generation quality checks
+        if: steps.fixtures.outputs.present == 'true'
+        run: PYTHONUTF8=1 python phase2c/check_outputs.py
+
+      - name: Skip notice (fixtures not committed)
+        if: steps.fixtures.outputs.present == 'false'
+        run: |
+          echo ""
+          echo "Phase 2C skipped — fixture files not found."
+          echo ""
+          echo "To enable this check:"
+          echo "  1. Open the sdd-skill folder in the Claude Code tab"
+          echo "  2. Paste the contents of phase2c/KICKOFF.md"
+          echo "  3. Commit the generated files in phase2c/flow_a/, flow_b/, flow_c/"
+          echo ""
+          echo "Phase 2C will then run automatically on the next push."
+
+  # ─────────────────────────────────────────────────────────────────
+  # JOB 3 — Phase 2B notice
+  # Phase 2B (behavioral tests) requires a live Claude Code session
+  # and cannot be automated in CI. This job surfaces that clearly
+  # rather than silently omitting it.
+  # ─────────────────────────────────────────────────────────────────
+  phase2b-notice:
+    name: "Phase 2B — Behavioral (manual)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Confirm Phase 2B is manual
+        run: |
+          echo "Phase 2B requires a live Claude Code session."
+          echo ""
+          echo "To run it:"
+          echo "  1. Open the sdd-skill folder in the Claude Code tab"
+          echo "  2. Paste the contents of phase2b/KICKOFF.md"
+          echo "  3. Claude Code will run all 13 behavioral tests and"
+          echo "     write the report to phase2b/eval_report.md"
+          echo ""
+          echo "Re-run Phase 2B after any change to:"
+          echo "  - SKILL.md (interview rules, gate logic, anti-patterns)"
+          echo "  - CLAUDE.md"
+          echo "  - references/templates.md"
+
+  # ─────────────────────────────────────────────────────────────────
+  # SUMMARY JOB — aggregates required checks
+  # Referenced in branch protection rules as the single required
+  # status check. Passes only when phase2a passes.
+  # ─────────────────────────────────────────────────────────────────
+  all-checks:
+    name: "All checks"
+    runs-on: ubuntu-latest
+    needs: [phase2a, phase2c, phase2b-notice]
+    if: always()
+
+    steps:
+      - name: Evaluate results
+        env:
+          PHASE2A: ${{ needs.phase2a.result }}
+          PHASE2C: ${{ needs.phase2c.result }}
+        run: |
+          echo "Phase 2A: $PHASE2A"
+          echo "Phase 2C: $PHASE2C"
+          echo "Phase 2B: manual — see phase2b/KICKOFF.md"
+          echo ""
+
+          # Phase 2A is the only hard requirement for automated CI.
+          # Phase 2C is allowed to be skipped (fixtures not committed)
+          # but must not fail if fixtures are present.
+          if [ "$PHASE2A" != "success" ]; then
+            echo "FAIL: Phase 2A did not pass. Fix SKILL.md or reference files."
+            exit 1
+          fi
+
+          if [ "$PHASE2C" = "failure" ]; then
+            echo "FAIL: Phase 2C fixtures are present but checks failed."
+            echo "Run phase2c/KICKOFF.md in Claude Code to regenerate fixtures."
+            exit 1
+          fi
+
+          echo "All automated checks passed."
