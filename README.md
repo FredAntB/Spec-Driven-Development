@@ -3,7 +3,7 @@
 > A Claude skill that writes your specs before you write your code —
 > and keeps every AI coding tool on the same page.
 
-[![CI](https://github.com/your-username/spec-driven-development/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/spec-driven-development/actions/workflows/ci.yml)
+[![CI](https://github.com/FredAntB/spec-driven-development/actions/workflows/ci.yml/badge.svg)](https://github.com/FredAntB/spec-driven-development/actions/workflows/ci.yml)
 [![Phase 2A](https://img.shields.io/badge/static%20assertions-64%2F64-brightgreen)](phase2a/assertions.md)
 [![Phase 2B](https://img.shields.io/badge/behavioral%20tests-13%2F13-brightgreen)](phase2b/eval_session.md)
 [![Phase 2C](https://img.shields.io/badge/generation%20quality-53%2F53-brightgreen)](phase2c/eval_flows.md)
@@ -58,13 +58,13 @@ No configuration needed.
 
 Or via CLI:
 ```bash
-claude plugin install your-username/spec-driven-development
+claude plugin install FredAntB/spec-driven-development
 ```
 
 ### Claude Code (Code tab)
 
 ```bash
-git clone https://github.com/your-username/spec-driven-development
+git clone https://github.com/FredAntB/spec-driven-development
 ```
 
 Open the folder in the Code tab. The `CLAUDE.md` file is auto-read
