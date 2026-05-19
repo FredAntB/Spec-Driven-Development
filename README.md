@@ -3,6 +3,7 @@
 > A Claude skill that writes your specs before you write your code —
 > and keeps every AI coding tool on the same page.
 
+[![Version](https://img.shields.io/badge/version-1.0--beta-blue)](https://github.com/FredAntB/spec-driven-development/releases/tag/v1.0-beta)
 [![CI](https://github.com/FredAntB/spec-driven-development/actions/workflows/ci.yml/badge.svg)](https://github.com/FredAntB/spec-driven-development/actions/workflows/ci.yml)
 [![Phase 2A](https://img.shields.io/badge/static%20assertions-64%2F64-brightgreen)](phase2a/assertions.md)
 [![Phase 2B](https://img.shields.io/badge/behavioral%20tests-13%2F13-brightgreen)](phase2b/eval_session.md)
