@@ -1,5 +1,5 @@
 # Phase 2B — Behavioral Evaluation
-# SDD Skill v2.1b
+# SDD Skill v1.0
 # Run via: "run phase2b eval" in the Code tab with this folder open
 
 ---
@@ -9,7 +9,51 @@
 Before running any test:
 1. Confirm you have read `SKILL.md` in full this session
 2. Confirm you have read `references/templates.md`
-3. Acknowledge: "SKILL.md loaded. Beginning Phase 2B — 13 behavioral tests."
+3. Write the CONTEXT.md fixture to disk — required for TEST-14:
+
+```
+phase2b/fixtures/CONTEXT.md
+```
+
+Content to write (use the Write tool):
+
+```markdown
+# CONTEXT.md
+> Freelance Time Tracker — Live session journal
+> Last updated: 2026-05-01 — Session 3
+
+## ⚡ Resume from here
+
+**Active task:** TASK-007 — Implement POST /tasks endpoint
+**Phase:** Phase 2 — Core endpoints
+**Status:** in progress
+**Blocker (if any):** none
+
+> On session start: read this file first, then requirements.md,
+> design.md, and tasks.md. Do not ask what to work on — resume
+> the active task above unless the user says otherwise.
+
+---
+
+## Session log
+
+| # | Date | What was done | Files changed |
+|---|---|---|---|
+| 3 | 2026-05-01 | Completed TASK-005 (JWT middleware) and TASK-006 (unit tests) | src/middleware/auth.js, tests/auth.test.js |
+| 2 | 2026-04-30 | Set up PostgreSQL schema, ran migrations for users + tasks tables | migrations/001_users.sql, migrations/002_tasks.sql |
+| 1 | 2026-04-29 | Initialized project, configured ESLint, set up Express boilerplate | package.json, src/app.js |
+
+---
+
+## Key decisions
+
+| Decision | Rationale | Session |
+|---|---|---|
+| JWT over sessions | Railway deployment makes shared session state awkward | 1 |
+| pg-pool over Prisma | Lighter dependency, more control over query structure | 2 |
+```
+
+4. Acknowledge: "SKILL.md loaded. CONTEXT.md fixture written. Beginning Phase 2B — 15 behavioral tests."
 
 ---
 
@@ -30,7 +74,7 @@ STEP 4  Record result: PASS (all P conditions met, zero F conditions triggered)
 STEP 5  Move to next test
 ```
 
-After all 13 tests, write the final report to `phase2b/eval_report.md`.
+After all 15 tests, write the final report to `phase2b/eval_report.md`.
 
 ---
 
@@ -308,7 +352,63 @@ FAIL conditions (ANY triggers FAIL):
 - F1: Response generates a new tasks.md or adds tasks without being asked
 - F2: Response skips the design.md divergence check entirely
 - F3: Response marks a task `[x]` without knowing which one
-- F4: Response asks two separate questions before establishing which task is done
+- F4: Response asks the divergence question in the same message as the task
+  identification question — divergence check must come AFTER the user has
+  named the specific task, never bundled with "which task did you finish?"
+
+---
+
+### TEST-14
+**Prompt:** `"continue where we left off"`
+**Category:** Session management — CONTEXT.md present
+**Expected path:** Read fixture CONTEXT.md → announce session resumption → name active task
+
+**Pre-condition:** `phase2b/fixtures/CONTEXT.md` must be on disk (written in Setup step 3).
+For this test only, treat `phase2b/fixtures/CONTEXT.md` as if it were `CONTEXT.md`
+in the project root — simulate the response Claude would give after reading it.
+
+**Simulate response, then check:**
+
+PASS conditions (ALL must be true):
+- P1: Response announces a session number (e.g. "Session 4" or "picking up from session 3")
+- P2: Response names the specific active task from the fixture: TASK-007 or "POST /tasks endpoint"
+- P3: Response does NOT ask what the user wants to work on
+- P4: Response does NOT ask what the project is or what the system does
+- P5: Response references at least one piece of context from the fixture
+  (e.g. the task, the phase, or a previous session's work)
+
+FAIL conditions (ANY triggers FAIL):
+- F1: Response asks "what would you like to work on?" or equivalent
+- F2: Response asks "what are we building?" or starts a new interview
+- F3: Response mentions CONTEXT.md doesn't exist or can't be found
+- F4: Response generates any spec file or config file
+- F5: Response ignores the fixture entirely and responds generically
+
+---
+
+### TEST-15
+**Prompt:** `"what are we working on?"`
+**Category:** Session management — CONTEXT.md absent
+**Expected path:** No CONTEXT.md in project → acknowledge unknown state → ask or offer to create
+
+**Pre-condition:** For this test, simulate that NO `CONTEXT.md` exists in the project root.
+The fixture from TEST-14 is in `phase2b/fixtures/` — treat the project root as CONTEXT.md-free.
+
+**Simulate response, then check:**
+
+PASS conditions (ALL must be true):
+- P1: Response acknowledges it doesn't have session state to resume from
+- P2: Response either asks what the user is working on OR offers to create CONTEXT.md
+- P3: Response does NOT invent or guess a task, project, or previous session
+- P4: Response mentions CONTEXT.md by name OR explains that a session journal would help
+- P5: Response contains exactly one `?` or one clear offer
+
+FAIL conditions (ANY triggers FAIL):
+- F1: Response claims to know what the user was working on (hallucination)
+- F2: Response starts a full new-project interview (wrong path — project may already exist)
+- F3: Response says nothing about session state and just asks "what do you want to build?"
+  without acknowledging the ambiguity
+- F4: Response generates any file without asking
 
 ---
 
@@ -333,11 +433,11 @@ Write the report to `phase2b/eval_report.md` using this structure:
 ```markdown
 # Phase 2B Behavioral Evaluation Report
 Date: [date]
-Skill version: v2.1b
+Skill version: v1.0
 Tester: Claude Code (Code tab, local session)
 
 ## Summary
-Total: 13  Pass: X  Warn: X  Fail: X
+Total: 15  Pass: X  Warn: X  Fail: X
 
 ## Results
 
@@ -345,6 +445,8 @@ Total: 13  Pass: X  Warn: X  Fail: X
 |------|---------------|--------|-------|
 | 01   | "start new project" | PASS | — |
 ...
+| 14   | "continue where we left off" | PASS | — |
+| 15   | "what are we working on?" | PASS | — |
 
 ## Failures and Warnings (detail)
 
@@ -365,8 +467,9 @@ Recommended fix: [what needs to change in SKILL.md]
 
 ## Final instruction
 
-After writing `phase2b/eval_report.md`, print a one-line summary to the chat:
+After writing `phase2b/eval_report.md`, delete the fixture file
+`phase2b/fixtures/CONTEXT.md`, then print a one-line summary to the chat:
 
 ```
-Phase 2B complete: [X]/13 Pass, [X]/13 Warn, [X]/13 Fail — see phase2b/eval_report.md
+Phase 2B complete: [X]/15 Pass, [X]/15 Warn, [X]/15 Fail — see phase2b/eval_report.md
 ```

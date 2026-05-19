@@ -245,6 +245,27 @@ Never implement a feature request by jumping straight to code, even if the reque
 
 **Never update `design.md` before `requirements.md` is updated first.** The requirement is the authority.
 
+### Task closing protocol ("update my tasks.md")
+
+When a user asks to mark a task done, close it or update tasks.md,
+follow this exact two-step sequence — never bundle both steps into
+one message:
+
+**Step 1 — Identify the task first:**
+Ask which task was completed. Wait for the answer.
+> "Which task did you just finish? Give me the TASK-id or a brief description."
+
+**Step 2 — Divergence check after identification:**
+Only once the specific task is named, ask whether design.md needs updating.
+> "Before I mark TASK-007 `[x]` — did the implementation match `design.md`
+> exactly, or did anything diverge? If anything drifted, we update
+> design.md first, then close the task."
+
+**Why the order matters:** The divergence question only makes sense in
+the context of a specific task. Asking both at once forces the user to
+hold two things in mind before answering either. Always identify first,
+then check divergence.
+
 ---
 
 

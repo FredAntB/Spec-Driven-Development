@@ -183,6 +183,13 @@ a("064","SKILL.md quality checklist includes CONTEXT.md checks",
 
 
 
+a("065","Task closing protocol section exists in SKILL.md",
+    "Task closing protocol" in SKILL)
+a("066","Task closing protocol defines two-step sequence",
+    "Step 1" in SKILL and "Step 2" in SKILL and "task closing" in SKILL.lower())
+a("067","Task closing protocol forbids bundling both questions",
+    "bundle" in SKILL.lower() or "never bundle" in SKILL.lower() or "Why the order matters" in SKILL)
+
 # ════════════════════════════════════════════════════════════
 # REPORT
 # ════════════════════════════════════════════════════════════
@@ -197,6 +204,7 @@ cats = {
     "ANTIPATTERN": [r for r in results if 40<=int(r[0])<=44],
     "CONSISTENCY": [r for r in results if 45<=int(r[0])<=52],
     "CONTEXT":     [r for r in results if 53<=int(r[0])<=64],
+    "TASKCLOSE":   [r for r in results if 65<=int(r[0])<=67],
 }
 print(f"\n{'='*62}")
 print(f"  SDD SKILL — PHASE 2A REPORT")
