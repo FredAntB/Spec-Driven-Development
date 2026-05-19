@@ -40,14 +40,23 @@ def placeholder_free(text):
 
 def extract_uib_core(text):
     """
-    Extract the Universal Instruction Block body.
-    Returns the text between the first pair of border lines (═{10+}).
-    Falls back to checking for the key mandate phrases directly.
+    Extract the Universal Instruction Block body between the OUTERMOST
+    pair of ═{10+} border lines — not the first pair.
+
+    When the UIB template has 3 borders (open / header-body separator / close),
+    the non-greedy regex captures only the header block, missing the mandate
+    body entirely. This outermost-pair approach always captures everything
+    between the first and last border, so inner separators are included and
+    the identity check covers the full mandate.
     """
-    m = re.search(r'═{10,}\n(.*?)═{10,}', text, re.DOTALL)
-    if m:
-        return m.group(1)
-    return ""
+    border = "═" * 10
+    first = text.find(border)
+    last  = text.rfind(border)
+    if first == -1 or first == last:
+        # Zero or one border found — fall back to phrase check
+        return ""
+    first_end = text.index("\n", first) + 1
+    return text[first_end:last]
 
 def uib_present(text):
     return "MANDATORY BEFORE ANY ACTION" in text

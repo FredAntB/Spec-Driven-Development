@@ -9,11 +9,15 @@ in full, then run the Phase 2C end-to-end flow evaluation exactly as defined in
 phase2c/eval_flows.md.
 
 Follow the execution protocol precisely:
-- Create all output directories before starting
+- Create all output directories before starting:
+  phase2c/flow_a/, phase2c/flow_b/, phase2c/flow_c/, phase2c/flow_c/.github/
 - Run all 3 flows in sequence (A → B → C)
 - Write every generated file to disk using the Write tool — no truncation
+- After each flow, read one of its generated files back to confirm it exists
 - After all flows complete, run the checker (see platform note below)
-- Write the full report to phase2c/eval_report_2c.md
+- Write the full report to phase2c/eval_report_2c.md using the Write tool
+- After writing, read phase2c/eval_report_2c.md back and confirm it exists and is complete
+- If the file is missing or truncated, write it again before continuing
 - Print the one-line summary to chat when done
 
 ---
