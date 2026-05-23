@@ -1,12 +1,15 @@
 # spec-driven-development
 
-> A Claude skill that writes your specs before you write your code —
-> and keeps every AI coding tool on the same page.
+> Claude, Cursor, and Copilot all read the same plan before touching your code.
+
+A Claude skill that writes your specs before you write code — interviews you,
+generates `requirements.md`, `design.md`, and `tasks.md`, then creates matching
+config files for every AI tool you use so they can't contradict each other.
 
 [![Version](https://img.shields.io/badge/version-1.0--beta-blue)](https://github.com/FredAntB/spec-driven-development/releases/tag/v1.0-beta)
 [![CI](https://github.com/FredAntB/spec-driven-development/actions/workflows/ci.yml/badge.svg)](https://github.com/FredAntB/spec-driven-development/actions/workflows/ci.yml)
-[![Phase 2A](https://img.shields.io/badge/static%20assertions-64%2F64-brightgreen)](phase2a/assertions.md)
-[![Phase 2B](https://img.shields.io/badge/behavioral%20tests-13%2F13-brightgreen)](phase2b/eval_session.md)
+[![Phase 2A](https://img.shields.io/badge/static%20assertions-67%2F67-brightgreen)](phase2a/assertions.md)
+[![Phase 2B](https://img.shields.io/badge/behavioral%20tests-15%2F15-brightgreen)](phase2b/eval_session.md)
 [![Phase 2C](https://img.shields.io/badge/generation%20quality-53%2F53-brightgreen)](phase2c/eval_flows.md)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -29,6 +32,23 @@ This skill fixes that by creating three files before any code is written:
 | `requirements.md` | What the system must do |
 | `design.md` | How it will be built |
 | `tasks.md` | What to build next, in order |
+
+Here's what those files actually look like:
+
+**`requirements.md`** — every requirement is traceable and testable:
+```markdown
+- **REQ-001**: Users shall log time entries against a client project.
+  - _Acceptance_: POST /entries returns 201 with entry id, duration, and project_id
+- **REQ-002**: Users shall generate a monthly invoice from logged entries.
+  - _Acceptance_: GET /invoices/:month returns PDF with line items summing to total
+```
+
+**`tasks.md`** — every task links back to its requirement:
+```markdown
+- [ ] **TASK-003** [REQ-001]: Implement POST /entries with validation
+  - _Output_: Route handler + duration schema validation
+  - _Verify_: POST /entries returns 201 with all required fields
+```
 
 Every AI tool reads from these files before touching code. Drift stops.
 
@@ -203,7 +223,7 @@ DIVERGENCE PROTOCOL:
 
 ## Test suite & CI
 
-This skill ships with a complete, runnable test suite — 130 assertions
+This skill ships with a complete, runnable test suite — 135 assertions
 across three phases. A GitHub Actions workflow runs the automatable
 checks on every push and pull request.
 
@@ -213,7 +233,7 @@ Four jobs run on every push to `main`/`master` and on every PR:
 
 | Job | What it does | Required to pass? |
 |---|---|---|
-| `phase2a` | Runs 64 static assertions via Python | Yes — hard gate |
+| `phase2a` | Runs 67 static assertions via Python | Yes — hard gate |
 | `phase2c` | Runs 53 generation quality checks against committed fixtures | Yes if fixtures present |
 | `phase2b-notice` | Prints instructions for running behavioral tests manually | Informational only |
 | `all-checks` | Aggregates results — reference this in branch protection rules | Yes |
@@ -225,7 +245,7 @@ automated phases now and any you add later.
 ### Running locally
 
 ```bash
-# Phase 2A — static assertions (64 checks)
+# Phase 2A — static assertions (67 checks)
 python3 phase2a/run_assertions.py
 
 # Windows — if python3 not on PATH or encoding errors occur
@@ -243,7 +263,7 @@ for a zero-setup run from any machine.
 | Phase | Paste this | Output |
 |---|---|---|
 | 2A | `phase2a/KICKOFF.md` | Runs script, explains any failures |
-| 2B | `phase2b/KICKOFF.md` | 13 behavioral tests → `eval_report.md` |
+| 2B | `phase2b/KICKOFF.md` | 15 behavioral tests → `eval_report.md` |
 | 2C | `phase2c/KICKOFF.md` | 3 flows → files → `eval_report_2c.md` |
 
 ### Phase 2C fixtures
@@ -263,8 +283,8 @@ CI will automatically pick up the new fixtures on the next push.
 
 | Phase | Type | Assertions | CI |
 |---|---|---|---|
-| 2A | Static file checks | 64 / 64 ✓ | Automated |
-| 2B | Behavioral (live session) | 13 / 13 ✓ | Manual |
+| 2A | Static file checks | 67 / 67 ✓ | Automated |
+| 2B | Behavioral (live session) | 15 / 15 ✓ | Manual |
 | 2C | Generation quality | 53 / 53 ✓ | Automated (fixtures required) |
 
 ---
@@ -306,7 +326,7 @@ The skill activates on a wide vocabulary. A sample:
 
 ## Community beta — we need testers
 
-This skill is in **public beta**. It has passed 118 automated
+This skill is in **public beta**. It has passed 135 automated
 assertions and 3 end-to-end generation flows, but it has not yet
 been tested by strangers using natural language.
 
@@ -377,5 +397,5 @@ MIT — use freely, attribution appreciated.
 
 Built and tested using the Claude skill framework. Test suite
 methodology adapted from the skill-creator eval harness. All
-118 assertions were written before the corresponding fixes —
+135 assertions were written before the corresponding fixes —
 test-first, always.
